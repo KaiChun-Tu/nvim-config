@@ -1,0 +1,13 @@
+# macOS system files
+.DS_Store
+
+# Plugin directories (managed by plugin managers)
+bundle/
+pack/
+
+# Test files
+test_*.py
+*.pyc
+
+# Lazy.nvim
+lazy-lock.json
