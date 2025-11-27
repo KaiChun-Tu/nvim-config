@@ -304,8 +304,8 @@ require("lazy").setup({
           },
           mappings = {
             i = {
-              ["<C-p>"] = actions.move_selection_previous,
-              ["<C-n>"] = actions.move_selection_next,
+              ["<C-k>"] = actions.move_selection_previous,
+              ["<C-j>"] = actions.move_selection_next,
               ["<C-q>"] = actions.send_selected_to_qflist + actions.open_qflist,
               ["<esc>"] = actions.close
             },
