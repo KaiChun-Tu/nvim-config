@@ -8,12 +8,16 @@ filetype plugin indent on
 " 設定 Leader 鍵為空格
 let mapleader = " "
 let maplocalleader = " "
+" ============================================
 " 分頁相關的快捷鍵
-nnoremap <C-t> :tabnew<CR>    " Ctrl+t 創建新分頁
-nnoremap <C-j> gT             " Ctrl+j 上一個分頁
-nnoremap <C-k> gt             " Ctrl+k 下一個分頁
-nnoremap <D-c> "+y            " Command+c 複製到系統剪貼簿
-nnoremap <leader>tc :tabclose<CR>  " ,tc 關閉當前分頁
+" ============================================
+" 注意: Ctrl+h/j/k/l 已保留給 vim-tmux-navigator
+" 注意: Ctrl+n 已被 Neo-tree 使用
+nnoremap <C-t> :tabnew<CR>              " Ctrl+t 創建新分頁
+nnoremap <leader>m :tabnext<CR>         " Space+m 下一個分頁
+nnoremap <leader>n :tabprevious<CR>     " Space+n 上一個分頁
+nnoremap <D-c> "+y                      " Command+c 複製到系統剪貼簿
+nnoremap <leader>tc :tabclose<CR>       " Space+t+c 關閉當前分頁
 nnoremap gt <Nop>
 nnoremap gT <Nop>
 nnoremap sd <cmd>lua require('goto-preview').goto_preview_definition()<CR>
@@ -187,8 +191,8 @@ require("lazy").setup({
 
       vim.opt.foldmethod = "expr"
       vim.opt.foldexpr = "nvim_treesitter#foldexpr()"
-      vim.opt.foldenable = false
-      vim.opt.foldlevel = 99
+      vim.opt.foldenable = true
+      vim.opt.foldlevel = 0
     end,
   },
   -- toggleterm.nvim
@@ -221,32 +225,15 @@ require("lazy").setup({
         direction = "float",
         float_opts = {
           border = "curved",
+          winblend = 0,
         },
         highlights = {
-          Normal = {
-            guibg = "#1d2021",
-          },
-          NormalFloat = {
-            link = 'Normal'
-          },
           FloatBorder = {
             guifg = "#fe8019",
-            guibg = "#1d2021",
-          },
-          StatusLine = {
-            guifg = "#fe8019",
-            guibg = "#1d2021",
-          },
-          StatusLineNC = {
-            guifg = "#fe8019",
-            guibg = "#1d2021",
-          },
-          Cursor = {
-            guifg = "#1d2021",
-            guibg = "#ebdbb2",
           },
         },
-        shade_terminals = true,
+        shade_terminals = false,
+        shading_factor = 0,
       })
 
       vim.api.nvim_create_user_command('Td', function()
@@ -327,7 +314,14 @@ require("lazy").setup({
       
       -- 載入 fzf 支援
       telescope.load_extension('fzf')
-      
+
+      -- 自定義 Telescope 選擇顏色（使用 Gruvbox 橘色）
+      vim.cmd([[
+        highlight TelescopeSelection guibg=#504945 guifg=#fe8019 gui=bold
+        highlight TelescopeSelectionCaret guifg=#fe8019 guibg=#504945
+        highlight TelescopeMultiSelection guibg=#3c3836 guifg=#fe8019
+      ]])
+
       -- 設定快捷鍵
       local builtin = require('telescope.builtin')
       vim.keymap.set('n', 'ff', function()
@@ -498,9 +492,27 @@ require("lazy").setup({
           ['<C-Space>'] = cmp.mapping.complete(),
           ['<C-e>'] = cmp.mapping.abort(),
           ['<CR>'] = cmp.mapping.confirm({ select = true }),
-          ['<Tab>'] = cmp.mapping(function(fallback)
+          -- Ctrl+j/k 只在補全菜單顯示時有效，否則讓給 vim-tmux-navigator
+          ['<C-j>'] = cmp.mapping(function(fallback)
             if cmp.visible() then
               cmp.select_next_item()
+            else
+              fallback()  -- 讓給 vim-tmux-navigator
+            end
+          end, { 'i', 's' }),
+          ['<C-k>'] = cmp.mapping(function(fallback)
+            if cmp.visible() then
+              cmp.select_prev_item()
+            else
+              fallback()  -- 讓給 vim-tmux-navigator
+            end
+          end, { 'i', 's' }),
+          -- 使用 Ctrl+n/p 作為補全導航的替代方案
+          ['<C-n>'] = cmp.mapping.select_next_item(),
+          ['<C-p>'] = cmp.mapping.select_prev_item(),
+          ['<Tab>'] = cmp.mapping(function(fallback)
+            if cmp.visible() then
+              fallback()
             elseif luasnip.expand_or_jumpable() then
               luasnip.expand_or_jump()
             else
@@ -508,9 +520,7 @@ require("lazy").setup({
             end
           end, { 'i', 's' }),
           ['<S-Tab>'] = cmp.mapping(function(fallback)
-            if cmp.visible() then
-              cmp.select_prev_item()
-            elseif luasnip.jumpable(-1) then
+            if luasnip.jumpable(-1) then
               luasnip.jump(-1)
             else
               fallback()
@@ -550,7 +560,22 @@ require("lazy").setup({
       require("nvim-surround").setup({})
     end,
   },
-
+  --leetcode.nvim
+  {
+      "kawre/leetcode.nvim",
+      build = ":TSUpdate html",
+      dependencies = {
+          "nvim-telescope/telescope.nvim",
+          "nvim-lua/plenary.nvim",
+          "MunifTanjim/nui.nvim",
+      },
+      opts = {
+          lang = "python3",  -- 預設語言
+          cn = {
+              enabled = true,  -- 啟用 leetcode.cn
+          },
+      },
+  }
   -- mini.ai
   {
     "echasnovski/mini.ai",
@@ -646,7 +671,7 @@ require("lazy").setup({
       },
       modes = {
         search = {
-          enabled = true,
+          enabled = false,  -- 禁用搜索模式，避免干扰 / 搜索
         },
         char = {
           enabled = true,
@@ -681,6 +706,26 @@ require("lazy").setup({
     config = true,
   },
 
+  -- vim-tmux-navigator
+  {
+    "christoomey/vim-tmux-navigator",
+    lazy = false,
+    cmd = {
+      "TmuxNavigateLeft",
+      "TmuxNavigateDown",
+      "TmuxNavigateUp",
+      "TmuxNavigateRight",
+      "TmuxNavigatePrevious",
+    },
+    keys = {
+      { "<c-h>", "<cmd>TmuxNavigateLeft<cr>" },
+      { "<c-j>", "<cmd>TmuxNavigateDown<cr>" },
+      { "<c-k>", "<cmd>TmuxNavigateUp<cr>" },
+      { "<c-l>", "<cmd>TmuxNavigateRight<cr>" },
+      { "<leader>p", "<cmd>TmuxNavigatePrevious<cr>" },
+    },
+  },
+
   -- which-key
   {
     "folke/which-key.nvim",
@@ -703,6 +748,10 @@ require("lazy").setup({
         { "<leader>g", group = "Git" },
         { "<leader>gb", desc = "Git Blame" },
         { "<leader>gh", desc = "Git Hunk Preview" },
+        { "<leader>h", desc = "Highlight Word Toggle" },
+        { "<leader>n", desc = "Next Tab" },
+        { "<leader>m", desc = "Previous Tab" },
+        { "<leader>p", desc = "Tmux Navigate Previous" },
         { "<leader>r", group = "Rename" },
         { "<leader>rn", desc = "Rename Symbol" },
         { "<leader>s", desc = "Flash Jump" },
@@ -745,7 +794,7 @@ require("lazy").setup({
 vim.g.ale_disable_lsp = 1
 EOF
 
-imap <silent><script><expr> <C-J> copilot#Accept("\<CR>")
+imap <silent><script><expr> <C-L> copilot#Accept("\<CR>")
 
 " 高亮設定
 let g:word_highlight_active = 0
@@ -792,8 +841,11 @@ function! ClearHighlight()
     match none
 endfunction
 
-" 映射 Ctrl+h
-nnoremap <silent> <C-h> :call HighlightWordToggle()<CR>
+" ============================================
+" 高亮單詞切換
+" ============================================
+" Ctrl+h 已保留給 vim-tmux-navigator，改用 <leader>hw
+nnoremap <silent> <leader>h :call HighlightWordToggle()<CR>
 
 " 可選：ESC 清除高亮
 " nnoremap <silent> <ESC> :call ClearHighlight()<CR>
