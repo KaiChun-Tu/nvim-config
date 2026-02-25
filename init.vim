@@ -563,7 +563,6 @@ require("lazy").setup({
   --leetcode.nvim
   {
       "kawre/leetcode.nvim",
-      build = ":TSUpdate html",
       dependencies = {
           "nvim-telescope/telescope.nvim",
           "nvim-lua/plenary.nvim",
@@ -575,7 +574,7 @@ require("lazy").setup({
               enabled = true,  -- 啟用 leetcode.cn
           },
       },
-  }
+  },
   -- mini.ai
   {
     "echasnovski/mini.ai",
