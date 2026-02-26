@@ -569,11 +569,21 @@ require("lazy").setup({
           "MunifTanjim/nui.nvim",
       },
       opts = {
-          lang = "python3",  -- 預設語言
+          lang = "cpp",
           cn = {
-              enabled = true,  -- 啟用 leetcode.cn
+              enabled = false,
+          },
+          theme = {
+              [""] = { fg = "#d4be98" },
+              normal = { fg = "#d4be98" },
+              alt = { fg = "#a89984" },
           },
       },
+      config = function(_, opts)
+          require("leetcode").setup(opts)
+          vim.api.nvim_create_user_command("Lt", "Leet test", {})
+          vim.api.nvim_create_user_command("Ls", "Leet submit", {})
+      end,
   },
   -- mini.ai
   {
